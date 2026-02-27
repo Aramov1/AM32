@@ -37,6 +37,10 @@ extern char send_telemetry;
 uint16_t interrupt_time = 0;
 extern char servoPwm;
 extern char dshot_telemetry;
+#ifdef USE_ANGLE_INPUT_INDEX
+extern volatile uint8_t  as5047_index_flag;
+extern volatile uint32_t as5047_revolution_count;
+#endif
 extern char armed;
 extern char out_put;
 extern uint8_t compute_dshot_flag;
@@ -281,6 +285,17 @@ void COMP_IRQHandler(void)
 	    interruptRoutine();
 	  }
 }
+
+#ifdef USE_ANGLE_INPUT_INDEX
+void EXTI3_IRQHandler(void)
+{
+    if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_3)) {
+        LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
+        as5047_index_flag = 1;         /* consumed by application; clear after use */
+        as5047_revolution_count++;     /* DEBUG: increments every mechanical revolution */
+    }
+}
+#endif
 
 void EXTI15_10_IRQHandler(void)
 {

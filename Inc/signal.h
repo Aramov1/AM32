@@ -26,3 +26,13 @@ extern char dshot;
 extern char servoPwm;
 
 void detectInput();
+
+#ifdef USE_ANGLE_INPUT_INDEX
+extern volatile uint8_t  as5047_index_flag;
+extern volatile uint32_t as5047_revolution_count;
+#endif
+
+#ifdef USE_ANGLE_INPUT_PWM
+extern char     anglePwmMode;
+extern uint16_t newinput_anglePwm;
+#endif

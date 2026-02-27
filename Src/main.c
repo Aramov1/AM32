@@ -539,6 +539,14 @@ uint16_t newinput = 0;
 char inputSet = 0;
 char dshot = 0;
 char servoPwm = 0;
+#ifdef USE_ANGLE_INPUT_INDEX
+volatile uint8_t  as5047_index_flag       = 0;  // set to 1 by EXTI ISR on each Index pulse; clear after use
+volatile uint32_t as5047_revolution_count = 0;  // DEBUG: total mechanical revolutions since power-on
+#endif
+#ifdef USE_ANGLE_INPUT_PWM
+char     anglePwmMode      = 0;  // 1 = AS5047P PWM capture path active
+uint16_t newinput_anglePwm = 0;  // angle output: 0 = 0 deg, 2000 = 360 deg
+#endif
 uint32_t zero_crosses;
 
 uint8_t zcfound = 0;

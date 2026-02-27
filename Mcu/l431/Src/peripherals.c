@@ -702,6 +702,30 @@ inline void resetInputCaptureTimer()
     IC_TIMER_REGISTER->CNT = 0;
 }
 
+#ifdef USE_ANGLE_INPUT_INDEX
+void INDEX_EXTI_init(void)
+{
+    /*
+     * PB3 -> EXTI line 3 -> EXTI3_IRQn (dedicated, no shared IRQ).
+     * AS5047P Index is active-HIGH. Pull-down keeps the line LOW when idle.
+     * The Index pulse at 15 000 RPM is ~3.9 us wide.
+     */
+    LL_AHB2_GRP1_EnableClock(LL_AHB2_GRP1_PERIPH_GPIOB);
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_3, LL_GPIO_MODE_INPUT);
+    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_3, LL_GPIO_PULL_DOWN);
+
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_SYSCFG);
+    LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTB, LL_SYSCFG_EXTI_LINE3);
+
+    LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_3);
+    LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_3);
+    LL_EXTI_DisableFallingTrig_0_31(LL_EXTI_LINE_3);
+
+    NVIC_SetPriority(EXTI3_IRQn, 2);
+    NVIC_EnableIRQ(EXTI3_IRQn);
+}
+#endif
+
 void enableCorePeripherals()
 {
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
@@ -774,4 +798,8 @@ void enableCorePeripherals()
     NVIC_SetPriority(EXTI15_10_IRQn, 2);
     NVIC_EnableIRQ(EXTI15_10_IRQn);
     EXTI->IMR1 |= (1 << 15);
+
+#ifdef USE_ANGLE_INPUT_INDEX
+    INDEX_EXTI_init();
+#endif
 }

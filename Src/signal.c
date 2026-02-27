@@ -115,6 +115,41 @@ void computeServoInput()
     }
 }
 
+#ifdef USE_ANGLE_INPUT_PWM
+void computeAngleInput()
+{
+    uint32_t pulse_width;
+
+    /*
+     * buffersize is always 3 in this mode. The DMA captures edge timestamps on
+     * both rising and falling (CCER = 0xa). Two possible 3-edge sequences:
+     *
+     *   {rising, falling, rising}  -> pin is HIGH after last edge
+     *                               -> high_time = [1] - [0]
+     *
+     *   {falling, rising, falling} -> pin is LOW after last edge
+     *                               -> high_time = [2] - [1]
+     *
+     * getInputPinState() reads the current pin level to select the right pair.
+     */
+    if (getInputPinState()) {
+        pulse_width = dma_buffer[1] - dma_buffer[0];
+    } else {
+        pulse_width = dma_buffer[2] - dma_buffer[1];
+    }
+
+    /*
+     * Timer runs at 4 MHz (PSC = CPU_FREQUENCY_MHZ/4 - 1).
+     * AS5047P period = 4096 ticks at 4 MHz.
+     * Map pulse_width ticks -> 0..2000 (0 deg -> 360 deg).
+     */
+    if (pulse_width > 0 && pulse_width < 4200) {
+        signaltimeout = 0;
+        newinput_anglePwm = (uint16_t)((pulse_width * 2000UL) / 4096UL);
+    }
+}
+#endif
+
 void transfercomplete()
 {
 #ifndef MCU_F031   // f031 does not use software EXTI event to process dshot
@@ -131,7 +166,15 @@ void transfercomplete()
     }
 #endif
     if (inputSet == 0) {
+#ifdef USE_ANGLE_INPUT_PWM
+        /* Skip auto-detection. Configure TIM15 for 4 MHz and force angle mode. */
+        anglePwmMode       = 1;
+        ic_timer_prescaler = CPU_FREQUENCY_MHZ / 4 - 1;  /* 4 MHz, 250 ns/tick */
+        buffersize         = 3;
+        inputSet           = 1;
+#else
         detectInput();
+#endif
         receiveDshotDma();
         return;
     }
@@ -162,6 +205,13 @@ void transfercomplete()
                 }
                 receiveDshotDma();
             }
+#ifdef USE_ANGLE_INPUT_PWM
+            if (anglePwmMode == 1) {
+                buffersize = 3;
+                computeAngleInput();
+                receiveDshotDma();
+            }
+#endif
         }
         if (!armed) {
             if (dshot && (average_count < 8) && (zero_input_count > 5)) {

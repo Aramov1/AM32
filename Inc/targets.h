@@ -96,6 +96,18 @@
 #define EEPROM_START_ADD (uint32_t)0x0800F800
 #endif
 
+#ifdef VIMDRONES_L431_TUDELFT
+#define FIRMWARE_NAME           "VmDrL431TU"
+#define FILE_NAME               "VIMDRONES_L431_TUDELFT"
+#define DEAD_TIME               45
+#define HARDWARE_GROUP_L4_B
+#define TARGET_VOLTAGE_DIVIDER  94
+#define MILLIVOLT_PER_AMP       100
+#define USE_SERIAL_TELEMETRY
+#define EEPROM_START_ADD        (uint32_t)0x0800F800
+#define USE_ANGLE_INPUT_INDEX
+#endif
+
 #ifdef VIMDRONES_L431_CAN
 #define FIRMWARE_NAME "VimdroneL431"
 #define FILE_NAME "VIMDRONES_L431_CAN"

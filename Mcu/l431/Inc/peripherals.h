@@ -51,3 +51,7 @@ void reloadWatchDogCounter(void);
 void generatePwmTimerEvent(void);
 void UN_TIM_Init(void);
 void LED_GPIO_init(void);
+
+#ifdef USE_ANGLE_INPUT_INDEX
+void INDEX_EXTI_init(void);
+#endif
