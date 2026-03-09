@@ -121,6 +121,21 @@
 #define USE_SERIAL_TELEMETRY
 #endif
 
+#ifdef VIMDRONES_L431_TUDELFT_CAN
+#define FIRMWARE_NAME           "VmL431TUCAN"
+#define FILE_NAME               "VIMDRONES_L431_TUDELFT_CAN"
+#define DRONECAN_SUPPORT        1
+#define DRONECAN_NODE_NAME      "com.vimdrones.esc_tudelft"
+#define DEAD_TIME               45
+#define HARDWARE_GROUP_L4_B
+#define TARGET_VOLTAGE_DIVIDER  94
+#define MILLIVOLT_PER_AMP       30
+#define CURRENT_OFFSET          110
+#define USE_SERIAL_TELEMETRY
+#define USE_ANGLE_INPUT_INDEX
+#define INDEX_ON_SIGNAL_PIN
+#endif
+
 #ifdef VIMDRONES_NANO_L431
 #define FIRMWARE_NAME "VM_NANO"
 #define FILE_NAME "VIMDRONES_NANO_L431"
