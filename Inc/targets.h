@@ -132,6 +132,9 @@
 #define MILLIVOLT_PER_AMP       30
 #define CURRENT_OFFSET          110
 #define USE_SERIAL_TELEMETRY
+
+#define CAN_EXTRA_INPUTS_COUNT 2
+
 #define USE_ANGLE_INPUT_INDEX
 #define INDEX_ON_SIGNAL_PIN
 #endif

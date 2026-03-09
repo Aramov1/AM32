@@ -32,7 +32,13 @@ extern volatile uint8_t  as5047_index_flag;
 extern volatile uint32_t as5047_revolution_count;
 #endif
 
-#ifdef USE_ANGLE_INPUT_PWM
-extern char     anglePwmMode;
-extern uint16_t newinput_anglePwm;
+#ifdef CAN_EXTRA_INPUTS_COUNT
+/*
+ * Extra CAN input channels, extracted from RawCommand slots
+ * esc_index+1 … esc_index+CAN_EXTRA_INPUTS_COUNT.
+ * Written from handle_RawCommand() (ISR context).
+ * Declared volatile because they cross interrupt boundaries.
+ */
+extern volatile uint16_t can_induced_sine_amplitude;      // 47..947 (0 to ~50% of max throttle)
+extern volatile uint16_t can_induced_phase_offset;        // 0..3599 (degrees, 0.1 degree resolution)
 #endif

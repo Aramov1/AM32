@@ -49,6 +49,25 @@ static bool done_startup;
 #define APP_SIGNATURE_MAGIC1 0x68f058e6
 #define APP_SIGNATURE_MAGIC2 0xafcee5a0
 
+
+#ifdef CAN_EXTRA_INPUTS_COUNT
+
+/* Stride: slots consumed per ESC = 1 throttle + N extra.
+ * Every ESC on the bus must have esc_index = position × CAN_ESC_SLOT_STRIDE. */
+#define CAN_ESC_SLOT_STRIDE  (1 + CAN_EXTRA_INPUTS_COUNT)
+
+/* Compile-time bounds checks — build fails here with a readable message
+ * if the configuration is geometrically impossible. */
+_Static_assert(CAN_EXTRA_INPUTS_COUNT >= 1,
+    "CAN_EXTRA_INPUTS_COUNT must be >= 1");
+_Static_assert(CAN_EXTRA_INPUTS_COUNT <= 19,
+    "CAN_EXTRA_INPUTS_COUNT too large: max 19 (20 slots total, 1 for throttle)");
+_Static_assert(CAN_ESC_SLOT_STRIDE <= 20,
+    "CAN_ESC_SLOT_STRIDE exceeds RawCommand hard limit of 20 elements");
+
+#endif
+
+
 /*
   application signature, filled in by set_app_signature.py
  */
@@ -132,7 +151,11 @@ static const struct parameter {
         // list of settable parameters
         // dronecan specific parameters
         { "CAN_NODE",               T_UINT8, 0, 127, 0, &eepromBuffer.can.can_node},
-        { "ESC_INDEX",              T_UINT8, 0, 32,  0, &eepromBuffer.can.esc_index},
+#ifdef CAN_EXTRA_INPUTS_COUNT
+        { "ESC_INDEX", T_UINT8, 0,  (uint16_t)(((20 / CAN_ESC_SLOT_STRIDE) - 1) * CAN_ESC_SLOT_STRIDE), 0, &eepromBuffer.can.esc_index },
+#else
+        { "ESC_INDEX", T_UINT8, 0, 32, 0, &eepromBuffer.can.esc_index },
+#endif
         { "TELEM_RATE",             T_UINT8, 0, 200, 25, &eepromBuffer.can.telem_rate},
         { "DEBUG_RATE",             T_UINT8, 0, 200, 0, &eepromBuffer.can.debug_rate},
         { "REQUIRE_ARMING",         T_BOOL,  0, 1,   1, &eepromBuffer.can.require_arming},
@@ -641,6 +664,35 @@ static void handle_RawCommand(CanardInstance *ins, CanardRxTransfer *transfer)
         const float scaled_value = input_can * (2000.0 / 8192);
         this_input = (uint16_t)(47 + scaled_value);
     }
+
+
+#ifdef CAN_EXTRA_INPUTS_COUNT
+    {
+        const uint8_t idx = eepromBuffer.can.esc_index;
+        /*
+         * Each guard checks two things:
+         *   1. cmd.cmd.len > idx+N  : sender populated this slot
+         *   2. data[idx+N] >= 0     : slot carries a valid non-negative value
+         *                            (omitted for signed can_duty_offset)
+         * If the sender does not populate the slot, the variable retains its
+         * previous value — giving backward-compatible behaviour.
+         */
+
+#if CAN_EXTRA_INPUTS_COUNT >= 1
+        /* Slot +1: induced_sine_amplitude.  Wire 0..8191 → internal 47..947 (0 to ~50% of max throttle) */
+        if (cmd.cmd.len > (uint8_t)(idx + 1) && cmd.cmd.data[idx + 1] >= 0) {
+            can_induced_sine_amplitude = (uint16_t)(47 + (cmd.cmd.data[idx + 1] * 900) / 8191);
+        }
+#endif
+
+#if CAN_EXTRA_INPUTS_COUNT >= 2
+        /* Slot +2: phase offset.  Wire 0..8191 → internal 0..3599 (degrees, 0.1 degree resolution)*/
+        if (cmd.cmd.len > (uint8_t)(idx + 2) && cmd.cmd.data[idx + 2] >= 0) {
+            can_induced_phase_offset = (uint16_t)((cmd.cmd.data[idx + 2] * 3599) / 8191);
+        }
+#endif
+    }
+#endif 
 
     const uint64_t ts = micros64();
     canstats.num_commands++;
