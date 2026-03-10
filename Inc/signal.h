@@ -41,4 +41,5 @@ extern volatile uint32_t as5047_revolution_count;
  */
 extern volatile uint16_t can_induced_sine_amplitude;      // 47..947 (0 to ~50% of max throttle)
 extern volatile uint16_t can_induced_phase_offset;        // 0..3599 (degrees, 0.1 degree resolution)
+extern volatile char m_step;
 #endif

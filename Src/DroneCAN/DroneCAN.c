@@ -681,7 +681,7 @@ static void handle_RawCommand(CanardInstance *ins, CanardRxTransfer *transfer)
 #if CAN_EXTRA_INPUTS_COUNT >= 1
         /* Slot +1: induced_sine_amplitude.  Wire 0..8191 → internal 47..947 (0 to ~50% of max throttle) */
         if (cmd.cmd.len > (uint8_t)(idx + 1) && cmd.cmd.data[idx + 1] >= 0) {
-            can_induced_sine_amplitude = (uint16_t)(47 + (cmd.cmd.data[idx + 1] * 900) / 8191);
+            can_induced_sine_amplitude = (uint16_t)((cmd.cmd.data[idx + 1] * 900) / 8191);
         }
 #endif
 

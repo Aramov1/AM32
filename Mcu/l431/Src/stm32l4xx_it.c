@@ -40,6 +40,7 @@ extern char dshot_telemetry;
 #ifdef USE_ANGLE_INPUT_INDEX
 extern volatile uint8_t  as5047_index_flag;
 extern volatile uint32_t as5047_revolution_count;
+extern volatile char m_step;
 #endif
 extern char armed;
 extern char out_put;
@@ -293,6 +294,7 @@ void EXTI2_IRQHandler(void)        /* PA2 – EXTI line 2 */
         LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
         as5047_index_flag = 1;
         as5047_revolution_count++;
+        m_step = 1; // reset mechanical step counter on each index pulse
     }
 }
 #endif
