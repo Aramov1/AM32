@@ -42,6 +42,10 @@ extern char out_put;
 extern uint8_t compute_dshot_flag;
 extern uint32_t commutation_interval;
 
+#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
+extern volatile uint8_t  interrupt_signal_pin_flag;
+#endif
+
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
@@ -288,6 +292,16 @@ void COMP_IRQHandler(void)
 }
   
 }
+
+#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
+void EXTI2_IRQHandler(void)
+{
+    if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2)) {
+        LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
+        abi_index_received = 1;         /* consumed by application; clear after use */
+    }
+}
+#endif
 
 void EXTI15_10_IRQHandler(void)
 {

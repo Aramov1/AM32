@@ -270,6 +270,16 @@ void zcfoundroutine(void);
 // sinusoidal_startup needs to be on, maps input to sinusoidal angle.
 
 //===========================================================================
+//===============  SPEED MODULATION IMPLEMENTATION DEFAULTS =================
+//===========================================================================
+
+// DEFAULTS FOR HOW MOTOR ANGLE POSITION IS RECEIVED
+#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
+volatile uint8_t  interrupt_signal_pin_flag = 0;  // set to 1 by EXTI ISR on each Index pulse; clear after use
+#endif
+
+
+//===========================================================================
 //=============================  Defaults =============================
 //===========================================================================
 

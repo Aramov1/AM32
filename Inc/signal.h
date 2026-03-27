@@ -25,4 +25,9 @@ extern char inputSet;
 extern char dshot;
 extern char servoPwm;
 
+
+#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
+extern volatile uint8_t  interrupt_signal_pin_flag;
+#endif
+
 void detectInput();
