@@ -133,6 +133,7 @@ static const struct parameter {
         // dronecan specific parameters
         { "CAN_NODE",               T_UINT8, 0, 127, 0, &eepromBuffer.can.can_node},
         { "ESC_INDEX",              T_UINT8, 0, 32,  0, &eepromBuffer.can.esc_index},
+        { "CYCLIC_MOULATION_RATIO", T_UINT8, 0,  7,  1, &eepromBuffer.can.cyclic_mod_ratio},
         { "TELEM_RATE",             T_UINT8, 0, 200, 25, &eepromBuffer.can.telem_rate},
         { "DEBUG_RATE",             T_UINT8, 0, 200, 0, &eepromBuffer.can.debug_rate},
         { "REQUIRE_ARMING",         T_BOOL,  0, 1,   1, &eepromBuffer.can.require_arming},
