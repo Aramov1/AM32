@@ -43,7 +43,7 @@ extern uint8_t compute_dshot_flag;
 extern uint32_t commutation_interval;
 
 #ifdef ENABLE_INTERRUPT_SIGNAL_PIN
-extern volatile uint8_t  interrupt_signal_pin_flag;
+extern int16_t m_step;
 #endif
 
 /******************************************************************************/
@@ -298,7 +298,7 @@ void EXTI2_IRQHandler(void)
 {
     if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2)) {
         LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
-        interrupt_signal_pin_flag = 1;         /* consumed by application; clear after use */
+        m_step = 0;
     }
 }
 #endif

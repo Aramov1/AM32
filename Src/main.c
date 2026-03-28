@@ -274,17 +274,15 @@ void zcfoundroutine(void);
 //===========================================================================
 
 // DEFAULTS FOR HOW MOTOR ANGLE POSITION IS RECEIVED
-#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
-volatile uint8_t  interrupt_signal_pin_flag = 0;  // set to 1 by EXTI ISR on each Index pulse; clear after use
-#endif
+int16_t m_step = 0; // Counter used to identify mechanicla angle position. 
+                     // Require ENABLE_INTERRUPT_SIGNAL_PIN in targets to be reseted to 0
 
 #ifdef CAN_EXTRA_INPUTS
 volatile int16_t can_Gp = 0;    // Pich Value
 volatile int16_t can_Gr = 0;    // Roll Value
-
 #endif
 
-const int_t sineLookupTable[] = { // For 7 pp motor
+const int16_t sineLookupTable[] = { // For 7 pp motor
      0,  149,  295,  434,  563,  680,
    782,  866,  931,  975,  997,  997,
    975,  931,  866,  782,  680,  563,
@@ -293,7 +291,7 @@ const int_t sineLookupTable[] = { // For 7 pp motor
   -975, -997, -997, -975, -931, -866,
   -782, -680, -563, -434, -295, -149};
 
-const uint16_t cosineLookupTable[] = { // For 7 pp motor
+const int16_t cosineLookupTable[] = { // For 7 pp motor
   1000,  989,  956,   901,  826,  733,
    623,  500,  365,   223,   75,  -75, 
   -223, -365, -500,  -623, -733, -826,
@@ -893,6 +891,21 @@ void commutate()
     }
     __enable_irq();
     changeCompInput();
+
+#ifdef ENABLE_INTERRUPT_SIGNAL_PIN
+        if (forward == 1) {
+        m_step++;
+        if (m_step >= 42) { // for 7 pole pair motores
+            m_step = 0;
+          }
+    } else {
+        m_step--;
+        if (m_step < 0) {
+            m_step = 6 * 7 - 1; // for 7 pole pair motores
+        }
+    }
+#endif
+
 #ifndef NO_POLLING_START
 	if (average_interval > polling_mode_changeover + 500) {
       old_routine = 1;

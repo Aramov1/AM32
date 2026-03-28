@@ -27,7 +27,7 @@ extern char servoPwm;
 
 
 #ifdef ENABLE_INTERRUPT_SIGNAL_PIN
-extern volatile uint8_t  interrupt_signal_pin_flag;
+extern int16_t m_step;
 #endif
 
 #ifdef CAN_EXTRA_INPUTS
