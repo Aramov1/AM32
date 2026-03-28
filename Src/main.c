@@ -278,6 +278,13 @@ void zcfoundroutine(void);
 volatile uint8_t  interrupt_signal_pin_flag = 0;  // set to 1 by EXTI ISR on each Index pulse; clear after use
 #endif
 
+#ifdef CAN_EXTRA_INPUTS
+volatile int16_t can_Gp = 0;    // Pich Value
+volatile int16_t can_Gr = 0;    // Roll Value
+
+#endif
+
+
 
 //===========================================================================
 //=============================  Defaults =============================

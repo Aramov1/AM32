@@ -30,4 +30,9 @@ extern char servoPwm;
 extern volatile uint8_t  interrupt_signal_pin_flag;
 #endif
 
+#ifdef CAN_EXTRA_INPUTS
+extern volatile int16_t can_Gp; // Pitch
+extern volatile int16_t can_Gr; // Roll
+#endif
+
 void detectInput();

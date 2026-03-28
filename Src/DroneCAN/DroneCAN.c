@@ -665,6 +665,16 @@ static void handle_RawCommand(CanardInstance *ins, CanardRxTransfer *transfer)
         this_input = (uint16_t)(47 + scaled_value);
     }
 
+#ifdef CAN_EXTRA_INPUTS
+    // Pitch and Roll Messages come after the ESC throttle Value
+    const uint8_t ESC_idx = eepromBuffer.can.esc_index;
+
+    // Read pitch Value
+    can_Gp = (int16_t) cmd.cmd.data[ESC_idx + 1] * (1024.0 / 8192.0);
+    can_Gr = (int16_t) cmd.cmd.data[ESC_idx + 2] * (1024.0 / 8192.0);
+
+#endif 
+
     const uint64_t ts = micros64();
     canstats.num_commands++;
     canstats.total_commands++;

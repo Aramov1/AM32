@@ -298,7 +298,7 @@ void EXTI2_IRQHandler(void)
 {
     if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2)) {
         LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
-        abi_index_received = 1;         /* consumed by application; clear after use */
+        interrupt_signal_pin_flag = 1;         /* consumed by application; clear after use */
     }
 }
 #endif
