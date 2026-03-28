@@ -276,6 +276,12 @@ void zcfoundroutine(void);
 // DEFAULTS FOR HOW MOTOR ANGLE POSITION IS RECEIVED
 int16_t m_step = 0; // Counter used to identify mechanicla angle position. 
                      // Require ENABLE_INTERRUPT_SIGNAL_PIN in targets to be reseted to 0
+int16_t speed_modulation_factor   =    0; //  Modulation Factor used during Cyclic Speed Control  -> 32 bits to account for scallings in computationn
+                                          //  Inside the interval [-100, 100]
+uint16_t max_duty_cycle_before_mod = 2000; // If cyclic Modulation is activated, it is necessary to reserve space for acceleration and deceleration
+                                           // Defined as 2000 * 100 / (100 - eepromBuffer.can.cyclic_mod_ratio * 14) 
+uint16_t min_duty_cycle_before_mod = 100;  // Motor protection to prevent descync. 
+uint16_t base_duty_cycle = 0; // Stores the duty_cycle_setpoint value before modulation
 
 #ifdef CAN_EXTRA_INPUTS
 volatile int16_t can_Gp = 0;    // Pich Value
@@ -1353,7 +1359,11 @@ if (!stepper_sine && armed) {
 
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
+#ifdef CAN_EXTRA_INPUTS
+    base_duty_cycle = duty_cycle_setpoint;
+#else
     duty_cycle = duty_cycle_setpoint;
+#endif
     tenkhzcounter++;
     ledcounter++;
     ramp_count++;
@@ -1474,9 +1484,15 @@ void tenKhzRoutine()
                     speedPid.integral = 0;
                 }
             }
-        }
+#ifdef USE_CAN_EXTRA_INPUTS
+            if (eepromBuffer.can.use_cyclic_speed_control) {
+                max_duty_cycle_before_mod =(uint16_t) 2000 * 100 / (100 + eepromBuffer.can.cyclic_mod_ratio * 14); 
+                speed_modulation_factor   = (int16_t) (eepromBuffer.can.cyclic_mod_ratio * (can_Gp * sineLookupTable[m_step] + can_Gr * cosineLookupTable[m_step]) / 1000000);
+            }
+#endif
+            }
         if (ramp_count > ramp_divider) {
-          ramp_count = 0;
+            ramp_count = 0;
 #ifdef VOLTAGE_BASED_RAMP
             uint16_t voltage_based_max_change = map(battery_voltage, 800, 2200, 10, 1);
             if (average_interval > 200) {
@@ -1498,6 +1514,20 @@ void tenKhzRoutine()
 #endif
 #ifdef CUSTOM_RAMP
    //         max_duty_cycle_change = eepromBuffer[30];
+#endif
+
+#ifdef USE_CAN_EXTRA_INPUTS
+            if (eepromBuffer.can.use_cyclic_speed_control) {
+                if (base_duty_cycle > max_duty_cycle_before_mod){
+                    base_duty_cycle = max_duty_cycle_before_mod;
+                }
+                
+                if (base_duty_cycle < min_duty_cycle_before_mod){
+                    speed_modulation_factor = 0;
+                }
+
+                duty_cycle = base_duty_cycle - base_duty_cycle * speed_modulation_factor / 100;
+            }
 #endif
             if ((duty_cycle - last_duty_cycle) > max_duty_cycle_change) {
                 duty_cycle = last_duty_cycle + max_duty_cycle_change;
