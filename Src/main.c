@@ -1360,7 +1360,11 @@ if (!stepper_sine && armed) {
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
 #ifdef CAN_EXTRA_INPUTS
-    base_duty_cycle = duty_cycle_setpoint;
+    if (eepromBuffer.can.use_cyclic_speed_control) {
+        base_duty_cycle = duty_cycle_setpoint;
+    }else{
+        duty_cycle = duty_cycle_setpoint;
+    }
 #else
     duty_cycle = duty_cycle_setpoint;
 #endif
@@ -1484,10 +1488,10 @@ void tenKhzRoutine()
                     speedPid.integral = 0;
                 }
             }
-#ifdef USE_CAN_EXTRA_INPUTS
+#ifdef CAN_EXTRA_INPUTS
             if (eepromBuffer.can.use_cyclic_speed_control) {
                 max_duty_cycle_before_mod =(uint16_t) 2000 * 100 / (100 + eepromBuffer.can.cyclic_mod_ratio * 14); 
-                speed_modulation_factor   = (int16_t) (eepromBuffer.can.cyclic_mod_ratio * (can_Gp * sineLookupTable[m_step] + can_Gr * cosineLookupTable[m_step]) / 1000000);
+                speed_modulation_factor   = (int16_t) (eepromBuffer.can.cyclic_mod_ratio * (can_Gp * sineLookupTable[m_step] + can_Gr * cosineLookupTable[m_step]) / 10000);
             }
 #endif
             }
@@ -1516,7 +1520,8 @@ void tenKhzRoutine()
    //         max_duty_cycle_change = eepromBuffer[30];
 #endif
 
-#ifdef USE_CAN_EXTRA_INPUTS
+#ifdef CAN_EXTRA_INPUTS
+
             if (eepromBuffer.can.use_cyclic_speed_control) {
                 if (base_duty_cycle > max_duty_cycle_before_mod){
                     base_duty_cycle = max_duty_cycle_before_mod;
@@ -1526,8 +1531,9 @@ void tenKhzRoutine()
                     speed_modulation_factor = 0;
                 }
 
-                duty_cycle = base_duty_cycle - base_duty_cycle * speed_modulation_factor / 100;
+                duty_cycle = base_duty_cycle - (base_duty_cycle * speed_modulation_factor) / 100;
             }
+
 #endif
             if ((duty_cycle - last_duty_cycle) > max_duty_cycle_change) {
                 duty_cycle = last_duty_cycle + max_duty_cycle_change;
