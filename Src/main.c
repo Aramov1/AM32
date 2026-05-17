@@ -230,6 +230,9 @@ an settings option)
 #ifdef USE_SERIAL_TELEM_CYCLIC_MOD
 #include "cyclic_telem.h"
 #endif
+#ifdef CAN_EXTRA_INPUTS
+#include "position_estimator.h"
+#endif
 #include "signal.h"
 #include "sounds.h"
 #include "targets.h"
@@ -283,7 +286,7 @@ int16_t speed_modulation_factor   =    0; //  Modulation Factor used during Cycl
                                           //  Inside the interval [-100, 100]
 uint16_t max_duty_cycle_before_mod = 2000; // If cyclic Modulation is activated, it is necessary to reserve space for acceleration and deceleration
                                            // Defined as 2000 * 100 / (100 - eepromBuffer.can.cyclic_mod_ratio * 14) 
-uint16_t min_duty_cycle_before_mod = 100;  // Motor protection to prevent descync. 
+uint16_t min_duty_cycle_before_mod = 20;  // Motor protection to prevent descync. 
 uint16_t base_duty_cycle = 0; // Stores the duty_cycle_setpoint value before modulation
 
 #ifdef CAN_EXTRA_INPUTS
@@ -933,6 +936,9 @@ void commutate()
             m_step = 6 * 6 - 1; // for 6 pole pair motores
         }
     }
+#ifdef CAN_EXTRA_INPUTS
+    position_estimator_on_commutation(forward ? 1 : -1);
+#endif
 #endif
 
 #ifndef NO_POLLING_START
@@ -1383,6 +1389,7 @@ if (!stepper_sine && armed) {
 void tenKhzRoutine()
 { // 20khz as of 2.00 to be renamed
 #ifdef CAN_EXTRA_INPUTS
+    position_estimator_on_10khz_tick();
     if (eepromBuffer.can.use_cyclic_speed_control) {
         base_duty_cycle = duty_cycle_setpoint;
     }else{
@@ -1561,10 +1568,18 @@ void tenKhzRoutine()
                     speed_modulation_factor = 0;
                 }
 
-                duty_cycle = base_duty_cycle - (base_duty_cycle * speed_modulation_factor) / 100;
+                if ((base_duty_cycle - last_duty_cycle) > max_duty_cycle_change) {
+                    base_duty_cycle = last_duty_cycle + max_duty_cycle_change;
+
+                }
+                if ((last_duty_cycle - base_duty_cycle) > max_duty_cycle_change) {
+                    base_duty_cycle = last_duty_cycle - max_duty_cycle_change;
+                }
+                last_duty_cycle = base_duty_cycle;
+                duty_cycle = base_duty_cycle - (base_duty_cycle * speed_modulation_factor) / 1000;
             }
 
-#endif
+#else
             if ((duty_cycle - last_duty_cycle) > max_duty_cycle_change) {
                 duty_cycle = last_duty_cycle + max_duty_cycle_change;
 
@@ -1572,9 +1587,16 @@ void tenKhzRoutine()
             if ((last_duty_cycle - duty_cycle) > max_duty_cycle_change) {
                 duty_cycle = last_duty_cycle - max_duty_cycle_change;
             }
-            }else{
-             duty_cycle = last_duty_cycle;
-            }
+            last_duty_cycle = duty_cycle;
+
+
+#endif
+
+        }else{
+            duty_cycle = last_duty_cycle;
+            last_duty_cycle = duty_cycle;
+
+        }
 
         if ((armed && running) && input > 47) {
             if (eepromBuffer.variable_pwm) {
@@ -1594,7 +1616,6 @@ void tenKhzRoutine()
             }
             }
         }
-        last_duty_cycle = duty_cycle;
         SET_AUTO_RELOAD_PWM(tim1_arr);
         SET_DUTY_CYCLE_ALL(adjusted_duty_cycle);
     }
@@ -1819,6 +1840,9 @@ int main(void)
     initCorePeripherals();
     enableCorePeripherals();
     loadEEpromSettings();
+#ifdef CAN_EXTRA_INPUTS
+    position_estimator_init();
+#endif
 
     if (VERSION_MAJOR != eepromBuffer.version.major || VERSION_MINOR != eepromBuffer.version.minor || EEPROM_VERSION > eepromBuffer.eeprom_version) {
         eepromBuffer.version.major = VERSION_MAJOR;
