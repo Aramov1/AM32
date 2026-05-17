@@ -68,9 +68,13 @@ typedef union EEprom_u {
             uint8_t reserved[8]; // 184-191
             uint8_t cyclic_mod_ratio; // 192
             uint8_t use_cyclic_speed_control; // 193
+            uint8_t use_cyclic_brake; // 194
+            uint8_t cyclic_brake_kp; // 195
+            uint8_t cyclic_brake_ki; // 196
+            uint8_t cyclic_brake_max_duty; // 197  (x10 -> effective 0..2000)
         } can;
     };
-    uint8_t buffer[194];
+    uint8_t buffer[198];
 } EEprom_t;
 
 extern EEprom_t eepromBuffer;
